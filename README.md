@@ -1,0 +1,1 @@
+DO NOT and i repeat DO NOT take this code and modify it without my consent. idgaf if you develop lua programs to run INSIDE the operating system, but DO NOT modify the os code in ANY way, shape, or form.
