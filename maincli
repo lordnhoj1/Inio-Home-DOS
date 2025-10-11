@@ -3,25 +3,35 @@ local userInput = nil
 local currentDirectory = [[A:\]]
 local currentDriver = 1
 local drive = disk.init(currentDriver)
-local amountOfDrivesWhichTheUserHasStoredInTheConfigFile = drive.readFile("config") or 1
+local amountOfDrivesWhichTheUserHasStoredInTheConfigFile = drive.readFile("config.sys") or 1
+local isRoot = false
+local rootPassword = "logicallyf3x"
 
 -- low-level shi(r)t and file management
 local memory = {}
 local memoryStep = 1
-local fileTemp = drive.readFile("filememory") or "filememory" -- if a file is not referenced here, it is considered nonexistant, but can still be read by the user.
+local fileTemp = drive.readFile("filememory.sys") or "filememory.sys" -- if a file is not referenced here, it is considered nonexistant, but can still be read by the user.
 local fileMemory = fileTemp:split(" ")
-local returnDriveFileStatus = drive.readFile("filememory") or false -- to fix the issue above you would need to read every possible file name in the universe
+local returnDriveFileStatus = drive.readFile("filememory.sys") or false -- to fix the issue above you would need to read every possible file name in the universe
 if returnDriveFileStatus == false then
-    drive.writeFile("filememory", table.concat(fileMemory, " "))
+    drive.writeFile("filememory.sys", table.concat(fileMemory, " "))
 end
 local function mount()
-    local FileTemp = drive.readFile("filememory") or "filememory"
+    local FileTemp = drive.readFile("filememory.sys") or "filememory"
     local FileMemory = FileTemp:split(" ")
-    local fileDriveStatus = drive.readFile("filememory") or false
+    local fileDriveStatus = drive.readFile("filememory.sys") or false
     if fileDriveStatus == false then
-        drive.writeFile("filememory", "filememory")
+        drive.writeFile("filememory.sys", "filememory.sys")
     end
     return FileMemory
+end
+local function update()
+    drive.writeFile("filememory.sys", table.concat(fileMemory, " "))
+end
+local function safelyExit(err)
+    clear()
+    wait(1)
+    print("Oops!\n\nInio has detected a major issue and decided to reboot for safety.\n\nPlease safely power off your device and restart after about 5 seconds.\n\nerr: " .. err)
 end
 
 -- table of directories (drivers)
@@ -33,21 +43,30 @@ local drivers = {
     [[E:\]],
     [[F:\]]
 }
+local driverBackup = {
+    [[A:\]],
+    [[B:\]],
+    [[C:\]],
+    [[D:\]],
+    [[E:\]],
+    [[F:\]]
+}
 
 -- extra modes
 local function config()
     clear()
-    print("Inio Hardware Manager\nv0.1 beta\n")
+    print("Inio Hardware Manager\nv1 full release\n")
     print("Please enter how many drives you have.")
     amountOfDrivesWhichTheUserHasStoredInTheConfigFile = input()
     clear()
     print("Configged.")
-    drive.writeFile("config", amountOfDrivesWhichTheUserHasStoredInTheConfigFile)
+    drive.writeFile("config.sys", amountOfDrivesWhichTheUserHasStoredInTheConfigFile)
     for i in pairs(fileMemory) do
         memory[memoryStep] = i + 1
     end
-    fileMemory[memory[memoryStep]] = "config"
+    fileMemory[memory[memoryStep]] = "config.sys"
     memory[memoryStep] = nil
+    update()
 end
 
 local function texteditor(filename)
@@ -70,20 +89,47 @@ local function texteditor(filename)
     end
 end
 
+-- defining file types and how they are ran
+local fileTypes = {
+    ["txt"] = function(filename)
+        print(drive.readFile(filename))
+    end,
+    ["exe"] = function(filename)
+        loadstring(drive.readFile(filename))()
+    end,
+    ["rsm"] = function(filename)
+        print("\n Inio Rossembly is the new standard for low-level programming. This feature is currently not finished.\n\nSent file: " .. filename)
+    end,
+    ["hdql"] = function(filename)
+        print("\nHigh-Level Database Querying Language is the greatest in its line for database management. This feature is currently not finished.\n\nSent file: " .. filename)
+    end,
+    ["min"] = function(filename)
+        print("\nMinio is a next-generation language for automating the creation, deletion, and editing of text files. This feature is currently not finished.")
+    end,
+    ["sys"] = function(filename)
+        print(drive.readFile(filename))
+    end
+}
+
 
 -- command table
 local cmds = {
     ["help"] = function()
-        print("\nWelcome to Inio!\n\nCurrent commands: help, specs, config (non-functional currently), dir, clear, newfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), ")
+        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, config, dir, clear, newfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename)")
+    end,
+    ["filehelp"] = function()
+        print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.")
     end,
     ["specs"] = function()
-        print("\nInio Home Edition v1\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
+        print("\nInio Home Edition v1.1b\nBeetles Orbs\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
     end,
     ["config"] = function()
         config()
     end,
     ["dir"] = function()
         print("")
+        local fileMem = drive.readFile("filememory.sys")
+        fileMemory = fileMem:split(" ")
         for i in pairs(fileMemory) do
             print(fileMemory[i])
         end
@@ -99,7 +145,7 @@ local cmds = {
         fileMemory[memory[memoryStep]] = filename
         memory[memoryStep] = nil
         memoryStep = 1
-        drive.writeFile("filememory",table.concat(fileMemory, " "))
+        update()
     end,
     ["readfile"] = function(filename)
         print("")
@@ -107,33 +153,57 @@ local cmds = {
         print(" \n" .. currentDirectory)
     end,
     ["editfile"] = function(filename)
-        if filename == "filememory" then
+        if filename == "filememory.sys" and isRoot == false then
             print("Cannot edit a system file.")
             return
         end
         texteditor(filename)
     end,
-    ["loadfile"] = function(filename)
-        loadstring(drive.readFile(filename))()
+    ["loadfile"] = function(fileName)
+        local fileData = fileName:split(".")
+        fileTypes[fileData[2]](fileName)
     end,
     ["rmfile"] = function(filename)
-        if filename == "filememory" then
+        if filename == "filememory.sys" and isRoot == false then
             print("Cannot remove a system file.")
             return
         end
         drive.deleteFile(filename)
-        local filememory = drive.readFile("filememory"):split(" ")
-        local result = table.find(filememory, filename)
-        table.remove(filememory, result)
-        drive.writeFile("filememory", table.concat(filememory, " "))
-        fileTemp = drive.readFile("filememory")
-        fileMemory = fileTemp:split(" ")
+        local file = drive.readFile("filememory.sys")
+        fileMemory = file:split(" ")
+        for i,v in pairs(fileMemory) do
+            if fileMemory[i] == filename then
+                fileMemory[i] = nil
+            end
+        end
+        update()
     end,
     ["cd"] = function(drivernumber)
         currentDriver = tonumber(drivernumber)
         drive = disk.init(currentDriver)
         currentDirectory = drivers[currentDriver]
         fileMemory = mount()
+    end,
+    ["su"] = function(rootPass)
+        if rootPass == rootPassword then
+            isRoot = not isRoot
+        end
+        if isRoot == true then
+            for i,v in pairs(drivers) do
+                drivers[i] = v..[[root\]]
+            end
+            currentDirectory = drivers[currentDriver]
+        else
+            for i in pairs(drivers) do
+                drivers[i] = driverBackup[i]
+            end
+            currentDirectory = drivers[currentDriver]
+        end
+    end,
+    ["filesize"] = function(filename)
+        local file = drive.readFile(filename)
+        local size = #file
+        print(size .. " bytes")
     end
 }
 
@@ -143,13 +213,14 @@ print("Input 1 is automatically assigned to drive A. Please insert a disk drive 
 wait(6)
 clear()
 wait(1)
-print("Inio Home Operating System\n v1 full release\n")
+print("Inio Home Operating System\n v1.1 beta\n")
 
 -- main
 local function cli()
     print(currentDirectory)
     while wait(0.1) do
-        userInput = input():split(" ")
+        local InputTransferrable = input()
+        userInput = InputTransferrable:split(" ")
         print(currentDirectory .. table.concat(userInput, " "))
 	    local success = pcall(cmds[userInput[1]], userInput[2] or nil) -- sudo rm -rf /
         if success then
