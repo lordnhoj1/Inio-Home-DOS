@@ -121,7 +121,7 @@ local cmds = {
         print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.")
     end,
     ["specs"] = function()
-        print("\nInio Home Edition v1.1b\nBeetles Orbs\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
+        print("\nInio Home Edition v1.1b\nbuggy rocks\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
     end,
     ["config"] = function()
         config()
