@@ -6,6 +6,7 @@ local drive = disk.init(currentDriver)
 local amountOfDrivesWhichTheUserHasStoredInTheConfigFile = drive.readFile("config.sys") or 1
 local isRoot = false
 local rootPassword = "logicallyf3x"
+local isDebugging = false
 
 -- low-level shi(r)t and file management
 local memory = {}
@@ -16,6 +17,13 @@ local returnDriveFileStatus = drive.readFile("filememory.sys") or false -- to fi
 if returnDriveFileStatus == false then
     drive.writeFile("filememory.sys", table.concat(fileMemory, " "))
 end
+local rsmFunc = {}
+local function rsmfunc()
+    return #rsmFunc + 1 or 1
+end
+
+-- functions so i can comply with all the linus rules
+
 local function mount()
     local FileTemp = drive.readFile("filememory.sys") or "filememory"
     local FileMemory = FileTemp:split(" ")
@@ -83,11 +91,48 @@ local function texteditor(filename)
             drive.writeFile(filename, storedFile)
             clear()
             print("exited")
-            print(currentDirectory)
             return
         end
     end
 end
+
+-- coding stuff
+function CONSTRUCT_Token() -- this just creates a new token object because lua has no oop
+  return { -- you can also put args into the consturct function instead of doing defaults
+    ctype = "token",
+    ttype = "", -- i like to use enums but lua has no custom enum feature 😡
+    value = "",  -- hi lw ty for the code for these two functions mostly 
+  }
+end
+
+function lex(str)
+  local tokens = {}
+  for i = 1,str:len(),1 do -- you can NOT do :split(""), the i in here is important as some tokens are multiple characters
+    local char = str:sub(i,i)
+    if string.find("0123456789.",char) then
+    local val = char
+        while string.find("0123456789.",str:sub(i+1,i+1)) do
+            wait()
+            i=i+1;
+            local c2 = str:sub(i,i)
+            val = val..c2
+        end
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "num"
+        tok.value = val
+        table.insert(tokens,tok)
+    end
+    if string.find("+-*/^", char) then
+        local val = char
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "op"
+        tok.value = val
+        table.insert(tokens,tok)
+    end
+  end
+  return tokens
+end
+
 
 -- defining file types and how they are ran
 local fileTypes = {
@@ -98,7 +143,7 @@ local fileTypes = {
         loadstring(drive.readFile(filename))()
     end,
     ["rsm"] = function(filename)
-        print("\n Inio Rossembly is the new standard for low-level programming. This feature is currently not finished.\n\nSent file: " .. filename)
+        print("\n Inio Rossembly is the new standard for low-level programming. This feature is currently not finished.\n\nSent file: " .. filename .. "\n")
     end,
     ["hdql"] = function(filename)
         print("\nHigh-Level Database Querying Language is the greatest in its line for database management. This feature is currently not finished.\n\nSent file: " .. filename)
@@ -115,13 +160,13 @@ local fileTypes = {
 -- command table
 local cmds = {
     ["help"] = function()
-        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, config, dir, clear, newfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename)")
+        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, config, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename)")
     end,
     ["filehelp"] = function()
         print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.")
     end,
     ["specs"] = function()
-        print("\nInio Home Edition v1.1b\nbuggy rocks\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
+        print("\nInio Home Edition v1.15b\nnapoleon bonaparte\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
     end,
     ["config"] = function()
         config()
@@ -150,21 +195,23 @@ local cmds = {
     ["readfile"] = function(filename)
         print("")
         print(drive.readFile(filename))
-        print(" \n" .. currentDirectory)
+        print(" \n")
     end,
     ["editfile"] = function(filename)
-        if filename == "filememory.sys" and isRoot == false then
+        local fileData = filename:split(".")
+        if fileData[2] == "sys" and isRoot == false then
             print("Cannot edit a system file.")
             return
         end
         texteditor(filename)
     end,
-    ["loadfile"] = function(fileName)
+    ["mkfile"] = function(fileName)
         local fileData = fileName:split(".")
         fileTypes[fileData[2]](fileName)
     end,
     ["rmfile"] = function(filename)
-        if filename == "filememory.sys" and isRoot == false then
+        local fileData = filename:split(".")
+        if fileData[2] == "sys" and isRoot == false then
             print("Cannot remove a system file.")
             return
         end
@@ -185,8 +232,10 @@ local cmds = {
         fileMemory = mount()
     end,
     ["su"] = function(rootPass)
-        if rootPass == rootPassword then
+        if rootPass == rootPassword and isRoot == false then
             isRoot = not isRoot
+        else
+            isRoot = false
         end
         if isRoot == true then
             for i,v in pairs(drivers) do
@@ -213,16 +262,16 @@ print("Input 1 is automatically assigned to drive A. Please insert a disk drive 
 wait(6)
 clear()
 wait(1)
-print("Inio Home Operating System\n v1.1 beta\n")
+print("Inio Home Operating System\n v1.15 beta\n")
 
 -- main
 local function cli()
-    print(currentDirectory)
-    while wait(0.1) do
-        local InputTransferrable = input()
-        userInput = InputTransferrable:split(" ")
-        print(currentDirectory .. table.concat(userInput, " "))
-	    local success = pcall(cmds[userInput[1]], userInput[2] or nil) -- sudo rm -rf /
+    while wait() do
+        write(currentDirectory)
+        local userInputTemp = input()
+        userInput = userInputTemp:split(" ")
+        print(table.concat(userInput, " "))
+	    local success, err = pcall(cmds[userInput[1]], userInput[2]) -- sudo rm -rf /
         if success then
             -- apparently i cant just do if error then so this is my solution
             -- this is very impractical and i would love to not use an if statement but it works so im not changing it
@@ -230,6 +279,9 @@ local function cli()
             -- update i think it works even though its highly impractical and makes me cringe when i look at it
         else
             print("Command not found.")
+            if isRoot == true then
+                print("\n\n" .. err)
+            end
         end
     end
 end
