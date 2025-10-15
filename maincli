@@ -7,6 +7,8 @@ local amountOfDrivesWhichTheUserHasStoredInTheConfigFile = drive.readFile("confi
 local isRoot = false
 local rootPassword = "logicallyf3x"
 local isDebugging = false
+local HttpService = GetService("HttpService")
+local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-Home-DOS/refs/heads/main/pacmandata"
 
 -- low-level shi(r)t and file management
 local memory = {}
@@ -166,7 +168,7 @@ local cmds = {
         print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.")
     end,
     ["specs"] = function()
-        print("\nInio Home Edition v1.15b\nnapoleon bonaparte\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
+        print("\nInio Home Edition v1.16b\nso many downloads\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
     end,
     ["config"] = function()
         config()
@@ -184,9 +186,7 @@ local cmds = {
     end,
     ["mkfile"] = function(filename)
         drive.writeFile(filename)
-        for i in pairs(fileMemory) do
-            memory[memoryStep] = i + 1
-        end
+        memory[memoryStep] = #fileMemory + 1
         fileMemory[memory[memoryStep]] = filename
         memory[memoryStep] = nil
         memoryStep = 1
@@ -253,7 +253,25 @@ local cmds = {
         local file = drive.readFile(filename)
         local size = #file
         print(size .. " bytes")
-    end
+    end,
+    ["rfdinstall"] = function(requestedFilename)
+        local PacmanRef = HttpService:GetAsync(PacmanRefUrl)
+        local Packages = PacmanRef:split("+")
+        for i,v in pairs(Packages) do
+            local PackageData = v:split(" ")
+            if PackageData[1] == requestedFilename then
+                local Url = PackageData[2]
+                local PackageContents = HttpService:GetAsync(Url)
+                drive.writeFile(PackageData[1], PackageContents)
+                memory[memoryStep] = #fileMemory + 1
+                fileMemory[memory[memoryStep]] = PackageData[1]
+                memory[memoryStep] = nil
+                memoryStep = 1
+                update()
+            end
+        end
+        
+    end,
 }
 
 -- little startup briefing
@@ -262,7 +280,7 @@ print("Input 1 is automatically assigned to drive A. Please insert a disk drive 
 wait(6)
 clear()
 wait(1)
-print("Inio Home Operating System\n v1.15 beta\n")
+print("Inio Home Operating System\n v1.16 beta\n")
 
 -- main
 local function cli()
