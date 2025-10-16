@@ -9,6 +9,7 @@ local rootPassword = "logicallyf3x"
 local isDebugging = false
 local HttpService = GetService("HttpService")
 local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-Home-DOS/refs/heads/main/pacmandata"
+local localVersion = "v1.2"
 
 -- low-level shi(r)t and file management
 local memory = {}
@@ -168,7 +169,7 @@ local cmds = {
         print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.")
     end,
     ["specs"] = function()
-        print("\nInio Home Edition v1.2\nsu logicallyf3x rmfile filememory.sys\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
+        print("\nInio Home Edition "..localVersion"\nsu logicallyf3x rmfile filememory.sys\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
     end,
     ["config"] = function()
         config()
@@ -287,11 +288,7 @@ local cmds = {
 
 -- little startup briefing
 clear()
-print("Input 1 is automatically assigned to drive A. Please insert a disk drive and connect it to input 1 if you've haven't already.")
-wait(6)
-clear()
-wait(1)
-print("Inio Home Operating System\n v1.2\n")
+print("Inio Home Operating System\n" .. localVersion .. "\n")
 
 -- main
 local function cli()
