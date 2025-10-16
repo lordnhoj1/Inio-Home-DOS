@@ -222,7 +222,7 @@ local cmds = {
         fileMemory = file:split(" ")
         for i,v in pairs(fileMemory) do
             if fileMemory[i] == filename then
-                fileMemory[i] = nil
+                table.remove(fileMemory, i)
             end
         end
         update()
