@@ -108,7 +108,7 @@ function CONSTRUCT_Token() -- this just creates a new token object because lua h
   }
 end
 
-function lex(str)
+local function lex(str)
   local tokens = {}
   for i = 1,str:len(),1 do -- you can NOT do :split(""), the i in here is important as some tokens are multiple characters
     local char = str:sub(i,i)
@@ -143,7 +143,8 @@ local fileTypes = {
         print(drive.readFile(filename))
     end,
     ["exe"] = function(filename)
-        loadstring("local localVersion = " .. localVersion .. " " ..drive.readFile(filename))()
+        local requestedString = drive.readFile(filename)
+        loadstring(requestedString, "InioFileManager")()
     end,
     ["rsm"] = function(filename)
         print("\n Inio Rossembly is the new standard for low-level programming. This feature is currently not finished.\n\nSent file: " .. filename .. "\n")
@@ -163,7 +164,7 @@ local fileTypes = {
 -- command table
 local cmds = {
     ["help"] = function()
-        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, config, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename), rfdinstall (requestedprogram), urlinstall (url, filename)")
+        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, config, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename), rfdinstall (requestedprogram), urlinstall (url, filename), debug")
     end,
     ["filehelp"] = function()
         print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.")
