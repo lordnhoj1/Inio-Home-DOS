@@ -168,7 +168,7 @@ local cmds = {
         print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.")
     end,
     ["specs"] = function()
-        print("\nInio Home Edition v1.16b\nso many downloads\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
+        print("\nInio Home Edition v1.2\nsu logicallyf3x rmfile filememory.sys\n\n" .. amountOfDrivesWhichTheUserHasStoredInTheConfigFile .. " connected drive(s).")
     end,
     ["config"] = function()
         config()
@@ -270,8 +270,19 @@ local cmds = {
                 update()
             end
         end
-        
     end,
+    ["urlinstall"] = function(requestedUrl, filename)
+        local contents = HttpService:GetAsync(requestedUrl)
+        drive.writeFile(filename, contents)
+        memory[memoryStep] = #fileMemory + 1
+        fileMemory[memory[memoryStep]] = filename
+        memory[memoryStep] = nil
+        memoryStep = 1
+        update()
+    end,
+    ["debug"] = function()
+        isDebugging = not isDebugging
+    end
 }
 
 -- little startup briefing
@@ -280,7 +291,7 @@ print("Input 1 is automatically assigned to drive A. Please insert a disk drive 
 wait(6)
 clear()
 wait(1)
-print("Inio Home Operating System\n v1.16 beta\n")
+print("Inio Home Operating System\n v1.2\n")
 
 -- main
 local function cli()
@@ -289,7 +300,7 @@ local function cli()
         local userInputTemp = input()
         userInput = userInputTemp:split(" ")
         print(table.concat(userInput, " "))
-	    local success, err = pcall(cmds[userInput[1]], userInput[2]) -- sudo rm -rf /
+	    local success, err = pcall(cmds[userInput[1]], userInput[2], userInput[3]) -- sudo rm -rf /
         if success then
             -- apparently i cant just do if error then so this is my solution
             -- this is very impractical and i would love to not use an if statement but it works so im not changing it
@@ -297,7 +308,7 @@ local function cli()
             -- update i think it works even though its highly impractical and makes me cringe when i look at it
         else
             print("Command not found.")
-            if isRoot == true then
+            if isDebugging == true then
                 print("\n\n" .. err)
             end
         end
