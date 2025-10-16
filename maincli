@@ -143,7 +143,7 @@ local fileTypes = {
         print(drive.readFile(filename))
     end,
     ["exe"] = function(filename)
-        loadstring(drive.readFile(filename))()
+        loadstring("local localVersion = " .. localVersion .. " " ..drive.readFile(filename))()
     end,
     ["rsm"] = function(filename)
         print("\n Inio Rossembly is the new standard for low-level programming. This feature is currently not finished.\n\nSent file: " .. filename .. "\n")
