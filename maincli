@@ -9,7 +9,7 @@ local rootPassword = "logicallyf3x"
 local isDebugging = false
 local HttpService = GetService("HttpService")
 local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-Home-DOS/refs/heads/main/pacmandata"
-local localVersion = "v1.2"
+local localVersion = "v1.2.2"
 
 -- low-level shi(r)t and file management
 local memory = {}
@@ -164,7 +164,7 @@ local fileTypes = {
 -- command table
 local cmds = {
     ["help"] = function()
-        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, config, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename), rfdinstall (requestedprogram), urlinstall (url, filename), debug")
+        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, config, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename), rfdinstall (requestedprogram), urlinstall (url, filename), debug, rfdlist")
     end,
     ["filehelp"] = function()
         print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.")
