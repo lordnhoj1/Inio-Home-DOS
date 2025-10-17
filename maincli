@@ -284,6 +284,14 @@ local cmds = {
     end,
     ["debug"] = function()
         isDebugging = not isDebugging
+    end,
+    ["rfdlist"] = function()
+        local PacmanRef = HttpService:GetAsync(PacmanRefUrl)
+        local PackagesTab = PacmanRef:split("+")
+        for i,v in pairs(PackagesTab) do
+            local Package = v:split(" ")
+            print(Package[1])
+        end
     end
 }
 
