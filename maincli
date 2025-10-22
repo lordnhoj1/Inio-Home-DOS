@@ -9,7 +9,7 @@ local rootPassword = "logicallyf3x"
 local isDebugging = false
 local HttpService = GetService("HttpService")
 local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-Home-DOS/refs/heads/main/pacmandata"
-local localVersion = "v1.2.2"
+local localVersion = "v1.2.3"
 
 -- low-level shi(r)t and file management
 local memory = {}
@@ -64,21 +64,6 @@ local driverBackup = {
 }
 
 -- extra modes
-local function config()
-    clear()
-    print("Inio Hardware Manager\nv1 full release\n")
-    print("Please enter how many drives you have.")
-    amountOfDrivesWhichTheUserHasStoredInTheConfigFile = input()
-    clear()
-    print("Configged.")
-    drive.writeFile("config.sys", amountOfDrivesWhichTheUserHasStoredInTheConfigFile)
-    for i in pairs(fileMemory) do
-        memory[memoryStep] = i + 1
-    end
-    fileMemory[memory[memoryStep]] = "config.sys"
-    memory[memoryStep] = nil
-    update()
-end
 
 local function texteditor(filename)
     clear()
@@ -110,12 +95,13 @@ end
 
 local function lex(str)
   local tokens = {}
-  for i = 1,str:len(),1 do -- you can NOT do :split(""), the i in here is important as some tokens are multiple characters
+  local i = 0
+  while i < str:len() do -- you can NOT do :split(""), the i in here is important as some tokens are multiple characters
+    i = i + 1
     local char = str:sub(i,i)
     if string.find("0123456789.",char) then
     local val = char
-        while string.find("0123456789.",str:sub(i+1,i+1)) do
-            wait()
+        while i < str:len() and string.find("0123456789.",str:sub(i+1,i+1)) do
             i=i+1;
             local c2 = str:sub(i,i)
             val = val..c2
@@ -164,16 +150,13 @@ local fileTypes = {
 -- command table
 local cmds = {
     ["help"] = function()
-        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, config, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename), rfdinstall (requestedprogram), urlinstall (url, filename), debug, rfdlist")
+        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, config, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename), rfdinstall (requestedprogram), urlinstall (url, filename), debug, rfdlist, fontsize (fontsize)")
     end,
     ["filehelp"] = function()
         print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.")
     end,
     ["specs"] = function()
         print("\nInio Home Edition ".. localVersion .. "\nsu logicallyf3x rmfile filememory.sys\n\n" .. tostring(amountOfDrivesWhichTheUserHasStoredInTheConfigFile) .. " connected drives.")
-    end,
-    ["config"] = function()
-        config()
     end,
     ["dir"] = function()
         print("")
@@ -292,7 +275,10 @@ local cmds = {
             local Package = v:split(" ")
             print(Package[1])
         end
-    end
+    end,
+    ["fontsize"] = function(fontsize)
+        setFontSize(fontsize)
+    end,
 }
 
 -- little startup briefing
