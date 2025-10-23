@@ -89,7 +89,14 @@ local minio = {
         memory = {}
     end,
     ["log"] = function(inputfromuser)
-        print(inputfromuser)
+        if inputfromuser == "fromMem" then
+            print(memory[#memory])
+        else
+            print(inputfromuser)
+        end
+    end,
+    ["mem"] = function(content)
+        memory[#memory+1 or 1] = content
     end
 }
 
@@ -281,7 +288,7 @@ local cmds = {
     end,
     ["rfdinstall"] = function(requestedFilename)
         local PacmanRef = HttpService:GetAsync(PacmanRefUrl)
-        local Packages = PacmanRef:split("+")
+        local Packages = PacmanRef:split("\n")
         for i,v in pairs(Packages) do
             local PackageData = v:split(" ")
             if PackageData[1] == requestedFilename then
