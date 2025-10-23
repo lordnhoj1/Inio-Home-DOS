@@ -1,1 +1,132 @@
+local httpservice = GetService("HttpService")
 
+function CONSTRUCT_Token() -- this just creates a new token object because lua has no oop
+  return { -- you can also put args into the consturct function instead of doing defaults
+    ctype = "token",
+    ttype = "", -- i like to use enums but lua has no custom enum feature 😡
+    value = "",  -- hi lw ty for the code for these two functions mostly 
+  }
+end
+function esc(x)
+   return (x:gsub('%%', '%%%%')
+            :gsub('^%^', '%%^')
+            :gsub('%$$', '%%$')
+            :gsub('%(', '%%(')
+            :gsub('%)', '%%)')
+            :gsub('%.', '%%.')
+            :gsub('%[', '%%[')
+            :gsub('%]', '%%]')
+            :gsub('%*', '%%*')
+            :gsub('%+', '%%+')
+            :gsub('%-', '%%-')
+            :gsub('%?', '%%?'))
+end
+
+local keywords = {"local"}
+
+local function lex(str)
+  local tokens = {}
+  local i = 0
+  while i < str:len() do -- you can NOT do :split(""), the i in here is important as some tokens are multiple characters
+    i = i + 1
+    local char = str:sub(i,i)
+    if string.find("0123456789.",esc(char)) then
+        local val = char
+        while i < str:len() and string.find("0123456789.",esc(str:sub(i+1,i+1))) do
+            i=i+1;
+            local c2 = str:sub(i,i)
+            val = val..c2
+        end
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "num"
+        tok.value = val
+        if val == "." then tok.ttype = "period" end
+        table.insert(tokens,tok)
+    elseif string.find("+-*/^", esc(char)) then
+        local val = char
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "op"
+        tok.value = val
+        table.insert(tokens,tok)
+    elseif string.find('"' or [[']], esc(char)) then
+        local val = ""
+        local start = char
+        while i < str:len() do
+            i=i+1;
+            if str:sub(i,i) == start then break end
+            local c2 = str:sub(i,i)
+            val = val..c2
+        end
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "str"
+        tok.value = val
+        table.insert(tokens,tok)
+    elseif char == "(" then
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "lparen"
+        tok.value = char
+        table.insert(tokens,tok)
+    elseif char == ")" then
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "rparen"
+        tok.value = char
+        table.insert(tokens,tok)
+    elseif char == "," then
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "comma"
+        tok.value = char
+        table.insert(tokens,tok)
+    elseif char == ":" then
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "colon"
+        tok.value = char
+        table.insert(tokens,tok)
+    elseif char == "{" then
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "lbrace"
+        tok.value = char
+        table.insert(tokens,tok)
+    elseif char == "}" then
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "rbrace"
+        tok.value = char
+        table.insert(tokens,tok)
+    elseif char == "[" then
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "lsquare"
+        tok.value = char
+        table.insert(tokens,tok)
+    elseif char == "]" then
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "rsquare"
+        tok.value = char
+        table.insert(tokens,tok)
+    elseif table.find(keywords, char) then -- broken and i know why i just dont wanna fix it rn
+        local val = char
+        while i < str:len() and table.find(keywords,char) do
+            i=i+1;
+            local c2 = str:sub(i,i)
+            val = val..c2
+        end
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "keyword"
+        tok.value = char
+        table.insert(tokens,tok)
+    else -- broken and i also know why
+        local tok = CONSTRUCT_Token()
+        tok.ttype = "identifier"
+        tok.value = char
+        table.insert(tokens,tok)
+    end
+  end
+  return tokens
+end
+
+setFontSize(34)
+local tok = lex('local')
+for i,v in pairs(tok) do
+    print(string.format("type: %s value: %s",v.ttype,v.value))
+end
+print("\n\n")
+local JSONtok = httpservice:JSONEncode(tok)
+print(JSONtok)
