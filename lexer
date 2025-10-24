@@ -125,4 +125,5 @@ end
 setFontSize(34)
 local tok = lex('"test"')
 local JSONtok = httpservice:JSONEncode(tok)
+print(JSONtok)
 return JSONtok
