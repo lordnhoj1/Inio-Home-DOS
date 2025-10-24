@@ -9,7 +9,7 @@ local rootPassword = "logicallyf3x"
 local isDebugging = false
 local HttpService = GetService("HttpService")
 local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-Home-DOS/refs/heads/main/pacmandata"
-local localVersion = "v1.3"
+local localVersion = "v1.4"
 local isExit = false
 
 -- low-level shi(r)t and file management
@@ -97,14 +97,31 @@ local minio = {
     end,
     ["mem"] = function(content)
         memory[#memory+1 or 1] = content
-    end
+    end,
+    ["load"] = function(filename)
+        local file = drive.readFile(filename)
+        loadstring(file)()
+    end,
+    ["root"] = function()
+        isRoot = not isRoot
+    end,
+    ["remove"] = function(filename)
+        local result = table.find(fileMemory, filename)
+        table.remove(fileMemory, result)
+        drive.deleteFile(filename)
+        update()
+    end,
+    ["read"] = function(filename)
+        local file = drive.readFile(filename)
+        print(file)
+    end,
 }
 
 -- extra modes
 
 local function texteditor(filename)
     clear()
-    print("Inio Text Editor v1\n\n")
+    print("Inio Text Editor v1\n")
     while wait(0.1) do
         userInput = input()
         print(userInput)
@@ -179,13 +196,26 @@ local fileTypes = {
         print("\nHigh-Level Database Querying Language is the greatest in its line for database management. This feature is currently not finished.\n\nSent file: " .. filename)
     end,
     ["min"] = function(filename)
-        print("\nMinio is a next-generation language for automating the creation, deletion, and editing of text files. This feature is currently not finished.")
-        print("\nbeta\n\n")
         local file = drive.readFile(filename)
         local fileTab = file:split("\n")
-        for i,v in pairs(fileTab) do
-            local temp = v:split("*")
-            minio[temp[1]](temp[2] or nil, temp[3] or nil)
+        if string.find(file, "root") then
+            print("Please enter root password.")
+            userInput = input()
+            if userInput == rootPassword then
+                for i,v in pairs(fileTab) do
+                    local temp = v:split("*")
+                    minio[temp[1]](temp[2] or nil, temp[3] or nil)
+                end
+            else
+                print("Incorrect.")
+                wait(2)
+                clear()
+            end
+        else
+            for i,v in pairs(fileTab) do
+                local temp = v:split("*")
+                minio[temp[1]](temp[2] or nil, temp[3] or nil)
+            end
         end
     end,
     ["sys"] = function(filename)
@@ -194,7 +224,6 @@ local fileTypes = {
 }
 
 
--- command table
 local cmds = {
     ["help"] = function()
         print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename), rfdinstall (requestedprogram), urlinstall (url, filename), debug, rfdlist, fontsize (fontsize)")
@@ -317,7 +346,7 @@ local cmds = {
     end,
     ["rfdlist"] = function()
         local PacmanRef = HttpService:GetAsync(PacmanRefUrl)
-        local PackagesTab = PacmanRef:split("+")
+        local PackagesTab = PacmanRef:split("\n")
         for i,v in pairs(PackagesTab) do
             local Package = v:split(" ")
             print(Package[1])
@@ -325,6 +354,28 @@ local cmds = {
     end,
     ["fontsize"] = function(fontsize)
         setFontSize(fontsize)
+    end,
+    ["chkmem"] = function()
+        memory = {}
+        memoryStep = 1
+        local timetemp = os.date():split(" ")
+        local time = timetemp[4]
+        local secondstemp = time:split(":")
+        local seconds = secondstemp[3]
+        repeat
+            memory[memoryStep] = HttpService:GenerateGUID(false)
+            memoryStep = memoryStep + 1
+            wait()
+        until memoryStep >= 200
+        print(table.concat(memory, "\n"))
+        memoryStep = 1
+        memory = {}
+        local timetemp2 = os.date():split(" ")
+        local time2 = timetemp2[4]
+        local secondstemp2 = time2:split(":")
+        local seconds2 = secondstemp2[3]
+        local difference = seconds2-seconds
+        print("completed successfully in "..difference.." seconds\n")
     end,
 }
 
@@ -351,7 +402,7 @@ local function cli()
         else
             print("Command not found.")
             if isDebugging == true then
-                print("\n\n" .. err)
+                print("\n\n" .. err .. "\n")
             end
         end
     end
