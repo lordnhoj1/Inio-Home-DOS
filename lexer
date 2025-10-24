@@ -123,10 +123,6 @@ local function lex(str)
 end
 
 setFontSize(34)
-local tok = lex('local')
-for i,v in pairs(tok) do
-    print(string.format("type: %s value: %s",v.ttype,v.value))
-end
-print("\n\n")
+local tok = lex('"test"')
 local JSONtok = httpservice:JSONEncode(tok)
-print(JSONtok)
+return JSONtok
