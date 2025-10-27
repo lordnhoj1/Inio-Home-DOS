@@ -25,6 +25,18 @@ local rsmFunc = {}
 local function rsmfunc()
     return #rsmFunc + 1 or 1
 end
+local MemoryManager = {
+    ["AddToMemory"] = function(register, content)
+        memory[register] = content
+    end,
+    ["RemoveFromMemory"] = function(register)
+        table.remove(memory, register)
+    end,
+    ["ClearMemory"] = function()
+        memoryStep = 1
+        memory = {}
+    end
+}
 
 -- functions so i can comply with all the linus rules
 
@@ -65,21 +77,42 @@ local driverBackup = {
 }
 
 -- minio
+local minio2arg = {
+    ["fromMem"] = function()
+        return memory[memoryStep]
+    end,
+    ["fromRand9ID"] = function()
+        return math.random(100000000, 999999999)
+    end,
+    ["fromRandGUID"] = function()
+        return HttpService:GenerateGUID(false)
+    end,
+    ["toMem"] = function(content)
+        memory[memoryStep] = content
+    end
+}
+local function minio2argfunc(funcinput)
+    local success, err = pcall(minio2arg[funcinput])
+    if success then
+        return err
+    end
+end
+
 local currentFile = nil
 local minio = {
     ["*exit"] = function()
         isExit = true
     end,
     ["new"] = function(filename)
-        drive.writeFile(filename)
-        fileMemory[#fileMemory+1] = filename
+        drive.writeFile(minio2argfunc(filename) or filename)
+        fileMemory[#fileMemory+1] = minio2argfunc(filename) or filename
         update()
     end,
     ["enter"] = function(filename)
-        currentFile = filename
+        currentFile = minio2argfunc(filename) or filename
     end,
     ["type"] = function(content)
-        memory[#memory+1 or 1] = content
+        memory[#memory+1 or 1] = minio2argfunc(content) or content
     end,
     ["finish"] = function()
         local temp = table.concat(memory, "\n")
@@ -89,32 +122,30 @@ local minio = {
         memory = {}
     end,
     ["log"] = function(inputfromuser)
-        if inputfromuser == "fromMem" then
-            print(memory[#memory])
-        else
-            print(inputfromuser)
-        end
+        print(minio2argfunc(inputfromuser) or inputfromuser)
     end,
     ["mem"] = function(content)
-        memory[#memory+1 or 1] = content
+        memory[memoryStep] = content
     end,
     ["load"] = function(filename)
-        local file = drive.readFile(filename)
+        local file = drive.readFile(minio2argfunc(filename) or filename)
         loadstring(file)()
     end,
     ["root"] = function()
         isRoot = not isRoot
     end,
     ["remove"] = function(filename)
-        local result = table.find(fileMemory, filename)
+        local result = table.find(fileMemory, minio2argfunc(filename) or filename)
         table.remove(fileMemory, result)
-        drive.deleteFile(filename)
+        drive.deleteFile(minio2argfunc(filename) or filename)
         update()
     end,
     ["read"] = function(filename)
-        local file = drive.readFile(filename)
-        print(file)
+        local file = drive.readFile(minio2argfunc(filename) or filename)
     end,
+    ["memstep"] = function(register)
+        memoryStep = register
+    end
 }
 
 -- extra modes
@@ -125,10 +156,9 @@ local function texteditor(filename)
     while wait(0.1) do
         userInput = input()
         print(userInput)
-        pcall(minio[userInput])
         memory[memoryStep] = userInput
         memoryStep = memoryStep + 1
-        if isExit == true then
+        if userInput == "*exit" then
             isExit = false
             local result = table.find(memory, "*exit")
             table.remove(memory, result)
@@ -142,60 +172,25 @@ local function texteditor(filename)
 end
 
 -- coding stuff
-function CONSTRUCT_Token() -- this just creates a new token object because lua has no oop
-  return { -- you can also put args into the consturct function instead of doing defaults
-    ctype = "token",
-    ttype = "", -- i like to use enums but lua has no custom enum feature 😡
-    value = "",  -- hi lw ty for the code for these two functions mostly 
-  }
-end
 
-local function lex(str)
-  local tokens = {}
-  local i = 0
-  while i < str:len() do -- you can NOT do :split(""), the i in here is important as some tokens are multiple characters
-    i = i + 1
-    local char = str:sub(i,i)
-    if string.find("0123456789.",char) then
-    local val = char
-        while i < str:len() and string.find("0123456789.",str:sub(i+1,i+1)) do
-            i=i+1;
-            local c2 = str:sub(i,i)
-            val = val..c2
-        end
-        local tok = CONSTRUCT_Token()
-        tok.ttype = "num"
-        tok.value = val
-        table.insert(tokens,tok)
-    end
-    if string.find("+-*/^", char) then
-        local val = char
-        local tok = CONSTRUCT_Token()
-        tok.ttype = "op"
-        tok.value = val
-        table.insert(tokens,tok)
-    end
-  end
-  return tokens
-end
 
 
 -- defining file types and how they are ran
 local fileTypes = {
-    ["txt"] = function(filename)
+    ["txt"] = function(filename, args)
         print(drive.readFile(filename))
     end,
-    ["exe"] = function(filename)
+    ["exe"] = function(filename, args)
         local requestedString = drive.readFile(filename)
-        loadstring(requestedString, "InioFileManager")()
+        loadstring(requestedString)(args)
     end,
-    ["rsm"] = function(filename)
+    ["rsm"] = function(filename,args)
         print("\n Inio Rossembly is the new standard for low-level programming. This feature is currently not finished.\n\nSent file: " .. filename .. "\n")
     end,
-    ["hdql"] = function(filename)
+    ["hdql"] = function(filename,args)
         print("\nHigh-Level Database Querying Language is the greatest in its line for database management. This feature is currently not finished.\n\nSent file: " .. filename)
     end,
-    ["min"] = function(filename)
+    ["min"] = function(filename,args)
         local file = drive.readFile(filename)
         local fileTab = file:split("\n")
         if string.find(file, "root") then
@@ -218,9 +213,14 @@ local fileTypes = {
             end
         end
     end,
-    ["sys"] = function(filename)
+    ["sys"] = function(filename,args)
         print(drive.readFile(filename))
     end,
+    ["exl"] = function(filename,args)
+        local file = drive.readFile(filename)
+        memoryStep = 1
+        memory[1] = loadstring(file)(args)
+    end
 }
 
 
@@ -266,9 +266,9 @@ local cmds = {
         end
         texteditor(filename)
     end,
-    ["loadfile"] = function(fileName)
+    ["loadfile"] = function(fileName, argsifany)
         local fileData = fileName:split(".")
-        fileTypes[fileData[2]](fileName)
+        fileTypes[fileData[2]](fileName, argsifany)
     end,
     ["rmfile"] = function(filename)
         local fileData = filename:split(".")
