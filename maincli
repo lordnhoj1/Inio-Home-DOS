@@ -9,8 +9,9 @@ local rootPassword = "logicallyf3x"
 local isDebugging = false
 local HttpService = GetService("HttpService")
 local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-Home-DOS/refs/heads/main/pacmandata"
-local localVersion = "v1.4"
+local localVersion = "v1.41"
 local isExit = false
+local bios = false
 
 -- low-level shi(r)t and file management
 local memory = {}
@@ -89,6 +90,10 @@ local minio2arg = {
     end,
     ["toMem"] = function(content)
         memory[memoryStep] = content
+    end,
+    ["fromInput"] = function()
+        local storedInput = input()
+        return storedInput
     end
 }
 local function minio2argfunc(funcinput)
@@ -355,28 +360,9 @@ local cmds = {
     ["fontsize"] = function(fontsize)
         setFontSize(fontsize)
     end,
-    ["chkmem"] = function()
-        memory = {}
-        memoryStep = 1
-        local timetemp = os.date():split(" ")
-        local time = timetemp[4]
-        local secondstemp = time:split(":")
-        local seconds = secondstemp[3]
-        repeat
-            memory[memoryStep] = HttpService:GenerateGUID(false)
-            memoryStep = memoryStep + 1
-            wait()
-        until memoryStep >= 200
-        print(table.concat(memory, "\n"))
-        memoryStep = 1
-        memory = {}
-        local timetemp2 = os.date():split(" ")
-        local time2 = timetemp2[4]
-        local secondstemp2 = time2:split(":")
-        local seconds2 = secondstemp2[3]
-        local difference = seconds2-seconds
-        print("completed successfully in "..difference.." seconds\n")
-    end,
+    ["bios"] = function()
+        bios = true
+    end
 }
 
 -- loading commands
@@ -400,10 +386,16 @@ local function cli()
             -- update i removed error and this code does not infact work
             -- update i think it works even though its highly impractical and makes me cringe when i look at it
         else
+            if err ~= "attempt to call a nil value" then
+                safelyExit(err)
+            end
             print("Command not found.")
             if isDebugging == true then
                 print("\n\n" .. err .. "\n")
             end
+        end
+        if bios == true then
+            break
         end
     end
 end
