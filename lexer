@@ -42,6 +42,18 @@ local function lex(str)
         tok.value = val
         if val == "." then tok.ttype = "period" end
         table.insert(tokens,tok)
+    elseif string.find("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_",esc(char)) then
+        local val = char
+        while i < str:len() and string.find("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_1234567890",esc(str:sub(i+1,i+1))) do
+            i=i+1;
+            local c2 = str:sub(i,i)
+            val = val..c2
+        end
+        local tok = CONSTRUCT_Token()
+        tok.ttype = table.find(keywords,val) and "keyword" or "identifier"
+        tok.value = val
+        if val == "." then tok.ttype = "period" end
+        table.insert(tokens,tok)
     elseif string.find("+-*/^", esc(char)) then
         local val = char
         local tok = CONSTRUCT_Token()
@@ -112,18 +124,13 @@ local function lex(str)
         tok.ttype = "keyword"
         tok.value = char
         table.insert(tokens,tok)
-    else -- broken and i also know why
-        local tok = CONSTRUCT_Token()
-        tok.ttype = "identifier"
-        tok.value = char
-        table.insert(tokens,tok)
     end
   end
   return tokens
 end
 
 setFontSize(34)
-local tok = lex(args)
-local JSONtok = httpservice:JSONEncode(tok)
-print(JSONtok)
-return JSONtok
+local tok = lex('local a = 36^2')
+for i,v in pairs(tok) do
+    print(string.format("type: %s value: %s",v.ttype,v.value))
+end
