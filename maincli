@@ -16,6 +16,8 @@ local bios = false
 -- low-level shi(r)t and file management
 local memory = {}
 local memoryStep = 1
+local sMemory = {}
+local sMemoryStep = 1
 local fileTemp = drive.readFile("filememory.sys") or "filememory.sys" -- if a file is not referenced here, it is considered nonexistant, but can still be read by the user.
 local fileMemory = fileTemp:split(" ")
 local returnDriveFileStatus = drive.readFile("filememory.sys") or false -- to fix the issue above you would need to read every possible file name in the universe
@@ -26,18 +28,6 @@ local rsmFunc = {}
 local function rsmfunc()
     return #rsmFunc + 1 or 1
 end
-local MemoryManager = {
-    ["AddToMemory"] = function(register, content)
-        memory[register] = content
-    end,
-    ["RemoveFromMemory"] = function(register)
-        table.remove(memory, register)
-    end,
-    ["ClearMemory"] = function()
-        memoryStep = 1
-        memory = {}
-    end
-}
 
 -- functions so i can comply with all the linus rules
 
@@ -58,6 +48,11 @@ local function safelyExit(err)
     wait(1)
     print("Oops!\n\nInio has detected a major issue and decided to reboot for safety.\n\nPlease safely power off your device and restart after about 5 seconds.\n\nerr: " .. err)
 end
+
+local protectedFiles = {
+    "sys",
+    "spx",
+}
 
 -- table of directories (drivers)
 local drivers = {
@@ -80,7 +75,7 @@ local driverBackup = {
 -- minio
 local minio2arg = {
     ["fromMem"] = function()
-        return memory[memoryStep]
+        return sMemory[sMemoryStep]
     end,
     ["fromRand9ID"] = function()
         return math.random(100000000, 999999999)
@@ -89,11 +84,19 @@ local minio2arg = {
         return HttpService:GenerateGUID(false)
     end,
     ["toMem"] = function(content)
-        memory[memoryStep] = content
+        sMemory[sMemoryStep] = content
     end,
     ["fromInput"] = function()
         local storedInput = input()
         return storedInput
+    end,
+    ["fromVar"] = function(name)
+        for i,v in pairs(sMemory) do
+            local varData = v:split("+")
+            if varData[1] == name then
+                return varData[2]
+            end
+        end
     end
 }
 local function minio2argfunc(funcinput)
@@ -105,9 +108,6 @@ end
 
 local currentFile = nil
 local minio = {
-    ["*exit"] = function()
-        isExit = true
-    end,
     ["new"] = function(filename)
         drive.writeFile(minio2argfunc(filename) or filename)
         fileMemory[#fileMemory+1] = minio2argfunc(filename) or filename
@@ -124,13 +124,16 @@ local minio = {
         drive.writeFile(currentFile, temp)
     end,
     ["memset"] = function()
+        sMemory = {}
         memory = {}
+        memoryStep = 1
+        sMemoryStep = 1
     end,
     ["log"] = function(inputfromuser)
         print(minio2argfunc(inputfromuser) or inputfromuser)
     end,
     ["mem"] = function(content)
-        memory[memoryStep] = content
+        sMemory[sMemoryStep] = minio2argfunc(content) or content
     end,
     ["load"] = function(filename)
         local file = drive.readFile(minio2argfunc(filename) or filename)
@@ -149,8 +152,11 @@ local minio = {
         local file = drive.readFile(minio2argfunc(filename) or filename)
     end,
     ["memstep"] = function(register)
-        memoryStep = register
-    end
+        sMemoryStep = register
+    end,
+    ["define"] = function(name, val)
+        memory[memoryStep] = name.."+"..val
+    end,
 }
 
 -- extra modes
@@ -218,13 +224,32 @@ local fileTypes = {
             end
         end
     end,
-    ["sys"] = function(filename,args)
+    ["sys"] = function(filename)
         print(drive.readFile(filename))
     end,
-    ["exl"] = function(filename,args)
-        local file = drive.readFile(filename)
-        memoryStep = 1
-        memory[1] = loadstring(file)(args)
+    ["spx"] = function(filename)
+        print("Cannot load a system protected executable.\n\nfilename: "..filename.."\n")
+    end,
+    ["cmd"] = function(filename)
+        local fileData = filename:split(".")
+        local fileContents = drive.readFile(filename)
+        print("Are you sure you want to compile this .cmd file to a system executable? This is irreversable. (Y/n)")
+        local answer = input()
+        if answer == "Y" then
+            local result = table.find(fileMemory, filename)
+            table.remove(fileMemory, result)
+            drive.deleteFile(filename)
+            update()
+            print("removed .cmd")
+            fileData[2] = "spx"
+            drive.writeFile(table.concat(fileData, "."), fileContents)
+            table.insert(fileMemory, table.concat(fileData, "."))
+            update()
+            print("converted to .spx")
+            print("operation finished successfully")
+        else
+            print("Aborted.")
+        end
     end
 }
 
@@ -265,7 +290,7 @@ local cmds = {
     end,
     ["editfile"] = function(filename)
         local fileData = filename:split(".")
-        if fileData[2] == "sys" and isRoot == false then
+        if table.find(protectedFiles, fileData[2]) and isRoot == false then
             print("Cannot edit a system file.")
             return
         end
@@ -277,7 +302,7 @@ local cmds = {
     end,
     ["rmfile"] = function(filename)
         local fileData = filename:split(".")
-        if fileData[2] == "sys" and isRoot == false then
+        if table.find(protectedFiles, fileData[2]) and isRoot == false then
             print("Cannot remove a system file.")
             return
         end
@@ -361,7 +386,7 @@ local cmds = {
         setFontSize(fontsize)
     end,
     ["bios"] = function()
-        bios = true
+        bios = true -- this can only be used with a bios if i ever build one. if there is no bios it will just crash it
     end
 }
 
@@ -379,19 +404,11 @@ local function cli()
         local userInputTemp = input()
         userInput = userInputTemp:split(" ")
         print(table.concat(userInput, " "))
-	    local success, err = pcall(cmds[userInput[1]], userInput[2], userInput[3]) -- sudo rm -rf /
-        if success then
-            -- apparently i cant just do if error then so this is my solution
-            -- this is very impractical and i would love to not use an if statement but it works so im not changing it
-            -- update i removed error and this code does not infact work
-            -- update i think it works even though its highly impractical and makes me cringe when i look at it
-        else
-            if err ~= "attempt to call a nil value" then
-                safelyExit(err)
-            end
-            print("Command not found.")
+	    local success, err = pcall(cmds[userInput[1]], unpack(userInput, 2, #userInput)) -- unpack is a recent addition to thie os
+        if not success then
+            print("command not found\n")
             if isDebugging == true then
-                print("\n\n" .. err .. "\n")
+                print(err.."\n")
             end
         end
         if bios == true then
