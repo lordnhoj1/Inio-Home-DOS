@@ -1,2 +1,2 @@
-help.spx///
-print("\nWelcome to Inio!\n\nCurrent commands: help,")===
+help.spx===
+print("\nWelcome to Inio!\n\nCurrent commands: help,")+++
