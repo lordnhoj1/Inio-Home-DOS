@@ -230,7 +230,7 @@ local fileTypes = {
     ["spx"] = function(filename)
         print("Cannot load a system protected executable.\n\nfilename: "..filename.."\n")
     end,
-    ["cmd"] = function(filename)
+    ["sdx"] = function(filename)
         local fileData = filename:split(".")
         local fileContents = drive.readFile(filename)
         print("Are you sure you want to compile this .cmd file to a system executable? This is irreversable. (Y/n)")
