@@ -1,4 +1,5 @@
-help.spx===print("\nWelcome to Inio!\n\nCurrent commands: help,")+++dir.spx===print("")
+help.spx===print("\nWelcome to Inio!\n\nCurrent commands: help, dir,")+++
+dir.spx===print("")
 local fileMem = drive.readFile("filememory.sys")
 local FileMemory = fileMem:split(" ")
 for i in pairs(FileMemory) do
