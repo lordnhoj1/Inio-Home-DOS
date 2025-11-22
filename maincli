@@ -9,7 +9,7 @@ local rootPassword = "logicallyf3x"
 local isDebugging = false
 local HttpService = GetService("HttpService")
 local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-Home-DOS/refs/heads/main/pacmandata"
-local localVersion = "v1.41"
+local localVersion = "v1.5"
 local isExit = false
 local bios = false
 
@@ -233,7 +233,7 @@ local fileTypes = {
     ["sdx"] = function(filename)
         local fileData = filename:split(".")
         local fileContents = drive.readFile(filename)
-        print("Are you sure you want to compile this .cmd file to a system executable? This is irreversable. (Y/n)")
+        print("Are you sure you want to compile this .sdx file to a system executable? This is irreversable. (Y/n)")
         local answer = input()
         if answer == "Y" then
             local result = table.find(fileMemory, filename)
