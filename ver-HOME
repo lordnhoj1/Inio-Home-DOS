@@ -1,0 +1,422 @@
+-- defining variables
+local userInput = nil
+local currentDirectory = [[A:\]]
+local currentDriver = 1
+local drive = disk.init(currentDriver)
+local amountOfDrivesWhichTheUserHasStoredInTheConfigFile = drive.readFile("config.sys") or 1
+local isRoot = false
+local rootPassword = "logicallyf3x"
+local isDebugging = false
+local HttpService = GetService("HttpService")
+local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-Home-DOS/refs/heads/main/pacmandata"
+local localVersion = "v1.5"
+local isExit = false
+local bios = false
+
+-- low-level shi(r)t and file management
+local memory = {}
+local memoryStep = 1
+local sMemory = {}
+local sMemoryStep = 1
+local fileTemp = drive.readFile("filememory.sys") or "filememory.sys" -- if a file is not referenced here, it is considered nonexistant, but can still be read by the user.
+local fileMemory = fileTemp:split(" ")
+local returnDriveFileStatus = drive.readFile("filememory.sys") or false -- to fix the issue above you would need to read every possible file name in the universe
+if returnDriveFileStatus == false then
+    drive.writeFile("filememory.sys", table.concat(fileMemory, " "))
+end
+local rsmFunc = {}
+local function rsmfunc()
+    return #rsmFunc + 1 or 1
+end
+
+-- functions so i can comply with all the linus rules
+
+local function mount()
+    local FileTemp = drive.readFile("filememory.sys") or "filememory"
+    local FileMemory = FileTemp:split(" ")
+    local fileDriveStatus = drive.readFile("filememory.sys") or false
+    if fileDriveStatus == false then
+        drive.writeFile("filememory.sys", "filememory.sys")
+    end
+    return FileMemory
+end
+local function update()
+    drive.writeFile("filememory.sys", table.concat(fileMemory, " "))
+end
+local function safelyExit(err)
+    clear()
+    wait(1)
+    print("Oops!\n\nInio has detected a major issue and decided to reboot for safety.\n\nPlease safely power off your device and restart after about 5 seconds.\n\nerr: " .. err)
+end
+
+local protectedFiles = {
+    "sys",
+    "spx",
+}
+
+-- table of directories (drivers)
+local drivers = {
+    [[A:\]],
+    [[B:\]],
+    [[C:\]],
+    [[D:\]],
+    [[E:\]],
+    [[F:\]]
+}
+local driverBackup = {
+    [[A:\]],
+    [[B:\]],
+    [[C:\]],
+    [[D:\]],
+    [[E:\]],
+    [[F:\]]
+}
+
+-- minio
+local minio2arg = {
+    ["fromMem"] = function()
+        return sMemory[sMemoryStep]
+    end,
+    ["fromRand9ID"] = function()
+        return math.random(100000000, 999999999)
+    end,
+    ["fromRandGUID"] = function()
+        return HttpService:GenerateGUID(false)
+    end,
+    ["toMem"] = function(content)
+        sMemory[sMemoryStep] = content
+    end,
+    ["fromInput"] = function()
+        local storedInput = input()
+        return storedInput
+    end,
+    ["fromVar"] = function(name)
+        for i,v in pairs(sMemory) do
+            local varData = v:split("+")
+            if varData[1] == name then
+                return varData[2]
+            end
+        end
+    end
+}
+local function minio2argfunc(funcinput)
+    local success, err = pcall(minio2arg[funcinput])
+    if success then
+        return err
+    end
+end
+
+local currentFile = nil
+local minio = {
+    ["new"] = function(filename)
+        drive.writeFile(minio2argfunc(filename) or filename)
+        fileMemory[#fileMemory+1] = minio2argfunc(filename) or filename
+        update()
+    end,
+    ["enter"] = function(filename)
+        currentFile = minio2argfunc(filename) or filename
+    end,
+    ["type"] = function(content)
+        memory[#memory+1 or 1] = minio2argfunc(content) or content
+    end,
+    ["finish"] = function()
+        local temp = table.concat(memory, "\n")
+        drive.writeFile(currentFile, temp)
+    end,
+    ["memset"] = function()
+        sMemory = {}
+        memory = {}
+        memoryStep = 1
+        sMemoryStep = 1
+    end,
+    ["log"] = function(inputfromuser)
+        print(minio2argfunc(inputfromuser) or inputfromuser)
+    end,
+    ["mem"] = function(content)
+        sMemory[sMemoryStep] = minio2argfunc(content) or content
+    end,
+    ["load"] = function(filename)
+        local file = drive.readFile(minio2argfunc(filename) or filename)
+        loadstring(file)()
+    end,
+    ["root"] = function()
+        isRoot = not isRoot
+    end,
+    ["remove"] = function(filename)
+        local result = table.find(fileMemory, minio2argfunc(filename) or filename)
+        table.remove(fileMemory, result)
+        drive.deleteFile(minio2argfunc(filename) or filename)
+        update()
+    end,
+    ["read"] = function(filename)
+        local file = drive.readFile(minio2argfunc(filename) or filename)
+    end,
+    ["memstep"] = function(register)
+        sMemoryStep = register
+    end,
+    ["define"] = function(name, val)
+        memory[memoryStep] = name.."+"..val
+    end,
+}
+
+-- extra modes
+
+local function texteditor(filename)
+    clear()
+    print("Inio Text Editor v1\n")
+    while wait(0.1) do
+        userInput = input()
+        print(userInput)
+        memory[memoryStep] = userInput
+        memoryStep = memoryStep + 1
+        if userInput == "*exit" then
+            isExit = false
+            local result = table.find(memory, "*exit")
+            table.remove(memory, result)
+            local storedFile = table.concat(memory, "\n")
+            drive.writeFile(filename, storedFile)
+            clear()
+            print("exited")
+            return
+        end
+    end
+end
+
+-- coding stuff
+
+
+
+-- defining file types and how they are ran
+local fileTypes = {
+    ["txt"] = function(filename, args)
+        print(drive.readFile(filename))
+    end,
+    ["exe"] = function(filename, args)
+        local requestedString = drive.readFile(filename)
+        loadstring(requestedString)(args)
+    end,
+    ["rsm"] = function(filename,args)
+        print("\n Inio Rossembly is the new standard for low-level programming. This feature is currently not finished.\n\nSent file: " .. filename .. "\n")
+    end,
+    ["hdql"] = function(filename,args)
+        print("\nHigh-Level Database Querying Language is the greatest in its line for database management. This feature is currently not finished.\n\nSent file: " .. filename)
+    end,
+    ["min"] = function(filename,args)
+        local file = drive.readFile(filename)
+        local fileTab = file:split("\n")
+        if string.find(file, "root") then
+            print("Please enter root password.")
+            userInput = input()
+            if userInput == rootPassword then
+                for i,v in pairs(fileTab) do
+                    local temp = v:split("*")
+                    minio[temp[1]](temp[2] or nil, temp[3] or nil)
+                end
+            else
+                print("Incorrect.")
+                wait(2)
+                clear()
+            end
+        else
+            for i,v in pairs(fileTab) do
+                local temp = v:split("*")
+                minio[temp[1]](temp[2] or nil, temp[3] or nil)
+            end
+        end
+    end,
+    ["sys"] = function(filename)
+        print(drive.readFile(filename))
+    end,
+    ["spx"] = function(filename)
+        print("Cannot load a system protected executable.\n\nfilename: "..filename.."\n")
+    end,
+    ["sdx"] = function(filename)
+        local fileData = filename:split(".")
+        local fileContents = drive.readFile(filename)
+        print("Are you sure you want to compile this .sdx file to a system executable? This is irreversable. (Y/n)")
+        local answer = input()
+        if answer == "Y" then
+            local result = table.find(fileMemory, filename)
+            table.remove(fileMemory, result)
+            drive.deleteFile(filename)
+            update()
+            print("removed .cmd")
+            fileData[2] = "spx"
+            drive.writeFile(table.concat(fileData, "."), fileContents)
+            table.insert(fileMemory, table.concat(fileData, "."))
+            update()
+            print("converted to .spx")
+            print("operation finished successfully")
+        else
+            print("Aborted.")
+        end
+    end
+}
+
+
+local cmds = {
+    ["help"] = function()
+        print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename), rfdinstall (requestedprogram), urlinstall (url, filename), debug, rfdlist, fontsize (fontsize)")
+    end,
+    ["filehelp"] = function()
+        print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.\n    .cmd, adds a command to the local command table when loaded")
+    end,
+    ["specs"] = function()
+        print("\nInio Home Edition ".. localVersion .. "\nsu logicallyf3x rmfile filememory.sys\n\n" .. tostring(amountOfDrivesWhichTheUserHasStoredInTheConfigFile) .. " connected drives.")
+    end,
+    ["dir"] = function()
+        print("")
+        local fileMem = drive.readFile("filememory.sys")
+        fileMemory = fileMem:split(" ")
+        for i in pairs(fileMemory) do
+            print(fileMemory[i])
+        end
+    end,
+    ["clear"] = function()
+        clear()
+    end,
+    ["mkfile"] = function(filename)
+        drive.writeFile(filename)
+        memory[memoryStep] = #fileMemory + 1
+        fileMemory[memory[memoryStep]] = filename
+        memory[memoryStep] = nil
+        memoryStep = 1
+        update()
+    end,
+    ["readfile"] = function(filename)
+        print("")
+        print(drive.readFile(filename))
+        print(" \n")
+    end,
+    ["editfile"] = function(filename)
+        local fileData = filename:split(".")
+        if table.find(protectedFiles, fileData[2]) and isRoot == false then
+            print("Cannot edit a system file.")
+            return
+        end
+        texteditor(filename)
+    end,
+    ["loadfile"] = function(fileName, argsifany)
+        local fileData = fileName:split(".")
+        fileTypes[fileData[2]](fileName, argsifany)
+    end,
+    ["rmfile"] = function(filename)
+        local fileData = filename:split(".")
+        if table.find(protectedFiles, fileData[2]) and isRoot == false then
+            print("Cannot remove a system file.")
+            return
+        end
+        drive.deleteFile(filename)
+        local file = drive.readFile("filememory.sys")
+        fileMemory = file:split(" ")
+        for i,v in pairs(fileMemory) do
+            if fileMemory[i] == filename then
+                table.remove(fileMemory, i)
+            end
+        end
+        update()
+    end,
+    ["cd"] = function(drivernumber)
+        currentDriver = tonumber(drivernumber)
+        drive = disk.init(currentDriver)
+        currentDirectory = drivers[currentDriver]
+        fileMemory = mount()
+    end,
+    ["su"] = function(rootPass)
+        if rootPass == rootPassword and isRoot == false then
+            isRoot = not isRoot
+        else
+            isRoot = false
+        end
+        if isRoot == true then
+            for i,v in pairs(drivers) do
+                drivers[i] = v..[[root\]]
+            end
+            currentDirectory = drivers[currentDriver]
+        else
+            for i in pairs(drivers) do
+                drivers[i] = driverBackup[i]
+            end
+            currentDirectory = drivers[currentDriver]
+        end
+    end,
+    ["filesize"] = function(filename)
+        local file = drive.readFile(filename)
+        local size = #file
+        print(size .. " bytes")
+    end,
+    ["rfdinstall"] = function(requestedFilename)
+        local PacmanRef = HttpService:GetAsync(PacmanRefUrl)
+        local Packages = PacmanRef:split("\n")
+        for i,v in pairs(Packages) do
+            local PackageData = v:split(" ")
+            if PackageData[1] == requestedFilename then
+                local Url = PackageData[2]
+                local PackageContents = HttpService:GetAsync(Url)
+                drive.writeFile(PackageData[1], PackageContents)
+                memory[memoryStep] = #fileMemory + 1
+                fileMemory[memory[memoryStep]] = PackageData[1]
+                memory[memoryStep] = nil
+                memoryStep = 1
+                update()
+            end
+        end
+    end,
+    ["urlinstall"] = function(requestedUrl, filename)
+        local contents = HttpService:GetAsync(requestedUrl)
+        drive.writeFile(filename, contents)
+        memory[memoryStep] = #fileMemory + 1
+        fileMemory[memory[memoryStep]] = filename
+        memory[memoryStep] = nil
+        memoryStep = 1
+        update()
+    end,
+    ["debug"] = function()
+        isDebugging = not isDebugging
+    end,
+    ["rfdlist"] = function()
+        local PacmanRef = HttpService:GetAsync(PacmanRefUrl)
+        local PackagesTab = PacmanRef:split("\n")
+        for i,v in pairs(PackagesTab) do
+            local Package = v:split(" ")
+            print(Package[1])
+        end
+    end,
+    ["fontsize"] = function(fontsize)
+        setFontSize(fontsize)
+    end,
+    ["bios"] = function()
+        bios = true -- this can only be used with a bios if i ever build one. if there is no bios it will just crash it
+    end
+}
+
+-- loading commands
+
+
+-- little startup briefing
+clear()
+print("Inio Home Operating System\n" .. localVersion .. "\n")
+
+-- main
+local function cli()
+    while wait() do
+        write(currentDirectory)
+        local userInputTemp = input()
+        userInput = userInputTemp:split(" ")
+        print(table.concat(userInput, " "))
+	    local success, err = pcall(cmds[userInput[1]], unpack(userInput, 2, #userInput)) -- unpack is a recent addition to thie os
+        if not success then
+            print("command not found\n")
+            if isDebugging == true then
+                print(err.."\n")
+            end
+        end
+        if bios == true then
+            break
+        end
+    end
+end
+
+
+
+cli()
