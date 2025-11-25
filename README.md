@@ -1,10 +1,3 @@
-maincli file is most likely the operating system
-in the future commands will be their own thing
+hello! this is most likely clL typing this all here.
 
-lexer is a component to the languages i am going to add, most likely will be available on RFD
-
-pacmanref is the table of urls for the RFD service
-
-commands hold what _was_ of the translating files to commands. it DID NOT WORK
-
-i would rather you not modify code but whenever the new installer comes about it would be considerably harder to mod the OS.
+both inio HOME and inio SERVER are free to use and modify (please credit me if modded). soon ill likely have a PAID inio ENTERPRISE version.
