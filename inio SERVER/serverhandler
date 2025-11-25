@@ -1,4 +1,30 @@
--- DRIVE 1 > INPUT 5 | GENERAL
--- DRIVE 2 > INPUT 6 | GENERAL
--- DRIVE 3 > INPUT 7 | GENERAL
--- DRIVE 4 > INPUT 8 | SHARED
+local drive1 = disk.init(5)
+local drive2 = disk.init(6)
+local drive3 = disk.init(7)
+local drive4 = disk.init(8)
+
+local serverIdentifier = "SERV1"
+local networkResponse = nil
+
+local events = { -- custom events go here
+    ["RETURN-STATUS"] = function(target)
+        sendNetworkPacket(target.."+++SVR OK+++"..serverIdentifier)
+    end,
+}
+
+onNetworkEvent(function(data)
+    local dataData = data:split("+++")
+    if dataData[1] == serverIdentifier then
+        events[dataData[2]](dataData[3])
+    end
+end)
+
+--[[
+hi!!!!!! one small thing.
+this is the SERVER HANDLER,
+FOR THE SERVER NOT THE CONTROLLER.
+there is NO NEED for a main() function.
+this is supposed to just respond to network events
+]]--
+
+sendNetworkPacket("MAIN+++STARTED+++"..serverIdentifier)
