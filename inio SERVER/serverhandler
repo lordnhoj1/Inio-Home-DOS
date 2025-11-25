@@ -1,8 +1,3 @@
-local drive1 = disk.init(5)
-local drive2 = disk.init(6)
-local drive3 = disk.init(7)
-local drive4 = disk.init(8)
-
 local serverIdentifier = "SERV1"
 local networkResponse = nil
 
