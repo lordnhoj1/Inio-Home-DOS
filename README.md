@@ -1,3 +1,5 @@
 hello! this is most likely clL typing this all here.
 
 both inio HOME and inio SERVER are free to use and modify (please credit me if modded). soon ill likely have a PAID inio ENTERPRISE version.
+
+for server statistics in inio SERVER, the monitor thingy will likely support 12-16 servers though the recommended amount is 6.
