@@ -1,2 +1,73 @@
--- nothing yet
-print("Hello, world!")
+local currentDirectory = "A:\\"
+local display = currentDirectory
+local editing = false
+local memory = {}
+local pMemory = {}
+local filesys = {
+	["A:\\"] = {},
+}
+
+local cmds = {
+	["help"] = function()
+		print("commands: help")
+	end,
+	["test"] = function(test)
+		print(test)
+	end,
+	["dir"] = function()
+		for i,v in pairs(filesys[currentDirectory]) do
+			print(i)
+		end
+	end,
+	["mkfile"] = function(filename)
+		local tab = filesys[currentDirectory]
+		tab[filename] = "empty"
+		filesys[currentDirectory] = tab
+	end,
+	["editfile"] = function(filename)
+		display = "* "
+		editing = true
+		pMemory[1] = filename
+	end,
+	["readfile"] = function(filename)
+		local tab = filesys[currentDirectory]
+		local file = tab[filename]:split("\n")
+		for i,v in pairs(file) do
+			print(v)
+		end
+	end,
+	["rmfile"] = function(filename)
+		local tab = filesys[currentDirectory]
+		tab[filename] = nil
+		filesys[currentDirectory] = tab
+	end
+}
+
+local userInputPort = io.port.input.new(1)
+userInputPort.Type = "string"
+
+userInputPort.Changed:Connect(function()
+	if editing == false then
+		print(display..userInputPort:GetValue())
+		local userInput = userInputPort:GetValue():split(" ")
+		local succ, err = pcall(cmds[userInput[1]], unpack(userInput, 2, #userInput))
+		if not succ and display == currentDirectory then
+			print("bad command\n")
+		end
+	elseif editing == true then
+		print(display..userInputPort:GetValue())
+		memory[#memory+1 or 1] = userInputPort:GetValue()
+		if userInputPort:GetValue() == "*exit" then
+			table.remove(memory, #memory)
+			editing = false
+			local tab = filesys[currentDirectory]
+			tab[pMemory[1]] = table.concat(memory, "\n")
+			filesys[currentDirectory] = tab
+			display = currentDirectory
+		end
+	end
+end)
+
+while task.wait(1) do
+	
+end
