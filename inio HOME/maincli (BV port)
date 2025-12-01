@@ -9,7 +9,9 @@ local filesys = {
 
 local cmds = {
 	["help"] = function()
-		print("commands: help")
+		print("commands: help, dir, mkfile (filename),")
+		print("editfile (filename) (when you want to exit editor type *exit),")
+		print("readfile (filename), rmfile (filename),")
 	end,
 	["test"] = function(test)
 		print(test)
