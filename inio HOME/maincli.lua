@@ -8,7 +8,7 @@ local isRoot = false
 local rootPassword = "logicallyf3x"
 local isDebugging = false
 local HttpService = GetService("HttpService")
-local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-DOS/refs/heads/main/RFDService/DataRFD"
+local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-DOS/refs/heads/main/RFDService/DataRFD.csv"
 local localVersion = "v1.5"
 local isExit = false
 local bios = false
@@ -349,7 +349,7 @@ local cmds = {
         local PacmanRef = HttpService:GetAsync(PacmanRefUrl)
         local Packages = PacmanRef:split("\n")
         for i,v in pairs(Packages) do
-            local PackageData = v:split(" ")
+            local PackageData = v:split(",")
             if PackageData[1] == requestedFilename then
                 local Url = PackageData[2]
                 local PackageContents = HttpService:GetAsync(Url)
@@ -377,8 +377,9 @@ local cmds = {
     ["rfdlist"] = function()
         local PacmanRef = HttpService:GetAsync(PacmanRefUrl)
         local PackagesTab = PacmanRef:split("\n")
+		table.remove(PackagesTab, 1)
         for i,v in pairs(PackagesTab) do
-            local Package = v:split(" ")
+            local Package = v:split(",")
             print(Package[1])
         end
     end,
