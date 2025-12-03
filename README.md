@@ -14,6 +14,9 @@ inio ENTERPRISE is a closed-source distribution of inio. this distribution, unli
 # about INIO
 inio is a name/idea that came from a reduction of the words input and output in(put)io(utput). under this name i have released inio HOME, inio SERVER, and soon inio ENTERPRISE. this project was made for me to grow my luau skills and share a piece of actually useful (i never make useful code) code with the funni lego community. yes i know httpservice is sandboxed but im trying to find a workaround rn.
 
+# how to use the new inio installer
+download and unzip the folder, run installer.bat, and follow the instructions on the terminal. itll put the downloaded files in the same directory as itself. FYI the powershell code is terrible but it works so im not changing it
+
 tysm for reading and/or installing inio!
 kind regards,
 clL (@lordnhoj1)
