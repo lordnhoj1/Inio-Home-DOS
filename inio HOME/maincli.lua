@@ -9,8 +9,7 @@ local rootPassword = "logicallyf3x"
 local isDebugging = false
 local HttpService = GetService("HttpService")
 local PacmanRefUrl = "https://raw.githubusercontent.com/lordnhoj1/Inio-DOS/refs/heads/main/RFDService/DataRFD.csv"
-local localVersion = "v1.5"
-local isExit = false
+local localVersion = "v1.6.2"
 local bios = false
 
 -- low-level shi(r)t and file management
@@ -193,7 +192,7 @@ local fileTypes = {
     end,
     ["exe"] = function(filename, args)
         local requestedString = drive.readFile(filename)
-        loadstring(requestedString)(args)
+        assert(loadstring(requestedString)(args), "h")
     end,
     ["rsm"] = function(filename,args)
         print("\n Inio Rossembly is the new standard for low-level programming. This feature is currently not finished.\n\nSent file: " .. filename .. "\n")
@@ -233,14 +232,14 @@ local fileTypes = {
     ["sdx"] = function(filename)
         local fileData = filename:split(".")
         local fileContents = drive.readFile(filename)
-        print("Are you sure you want to compile this .sdx file to a system executable? This is irreversable. (Y/n)")
+        print("Are you sure you want to convert this .sdx file to a system executable? This is irreversable. (Y/n)")
         local answer = input()
         if answer == "Y" then
             local result = table.find(fileMemory, filename)
             table.remove(fileMemory, result)
             drive.deleteFile(filename)
             update()
-            print("removed .cmd")
+            print("removed .sdx")
             fileData[2] = "spx"
             drive.writeFile(table.concat(fileData, "."), fileContents)
             table.insert(fileMemory, table.concat(fileData, "."))
@@ -259,7 +258,7 @@ local cmds = {
         print("\nWelcome to Inio!\n\nCurrent commands: help, filehelp, specs, dir, clear, mkfile (filename), editfile (filename), readfile (filename), loadfile (filename), rmfile (filename), cd (drivernumber), su (rootpassword), filesize (filename), rfdinstall (requestedprogram), urlinstall (url, filename), debug, rfdlist, fontsize (fontsize)")
     end,
     ["filehelp"] = function()
-        print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.\n    .cmd, adds a command to the local command table when loaded")
+        print("\nWelcome to Inio!\nAll files must have one of the following extensions.\n    .txt, text file.\n    .exe, lua executable. \n    .rsm, Inio Rossembly executable.\n    .hdql, High Level Database Querying Language, SQL clone.\n    .sys, core system file.\n    .min, Minio file. Basically a macro.\n    .sdx, system designated executable. this is a file you can create and modify. loadfile it to convert to .spx where it cam be used as a command.\nspx, system protected executable. unable to be ran by user outside of cli.")
     end,
     ["specs"] = function()
         print("\nInio Home Edition ".. localVersion .. "\nsu logicallyf3x rmfile filememory.sys\n\n" .. tostring(amountOfDrivesWhichTheUserHasStoredInTheConfigFile) .. " connected drives.")
@@ -406,11 +405,18 @@ local function cli()
         userInput = userInputTemp:split(" ")
         print(table.concat(userInput, " "))
 	    local success, err = pcall(cmds[userInput[1]], unpack(userInput, 2, #userInput)) -- unpack is a recent addition to thie os
+        local temp = drive.readFile(userInput[1]..".spx") or false
         if not success then
-            print("command not found\n")
-            if isDebugging == true then
-                print(err.."\n")
-            end
+			if temp ~= false then
+				local file = drive.readFile(userInput[1]..".spx")
+                local loadedFunction = loadstring(file)()
+                loadedFunction(currentDriver, unpack(userInput, 2, #userInput))
+			else
+            	print("command not found\n")
+            	if isDebugging == true then
+                	print(err.."\n")
+            	end
+			end
         end
         if bios == true then
             break
