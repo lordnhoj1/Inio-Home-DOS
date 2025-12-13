@@ -400,6 +400,11 @@ return function(driveTable)
         end,
         ["bios"] = function()
             bios = true -- this can only be used with a bios if i ever build one. if there is no bios it will just crash it
+        end,
+        ["sysinfo"] = function()
+            for i,v in pairs(driveTable) do
+                print(i.." | "..table.concat(v, " - "))
+            end
         end
     }
     
