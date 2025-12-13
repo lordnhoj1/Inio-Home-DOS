@@ -403,7 +403,10 @@ return function(driveTable)
         end,
         ["sysinfo"] = function()
             for i,v in pairs(driveTable) do
-                print(i.." | "..table.concat(v, " - "))
+                print(string.format("driver %s", i))
+                for it,val in pairs(v) do
+                    print(string.format("      %s = %s", it, tostring(val)))
+                end
             end
         end
     }
@@ -441,8 +444,5 @@ return function(driveTable)
             end
         end
     end
-    
-    
-    
     cli()
 end
