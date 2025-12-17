@@ -201,7 +201,7 @@ return function(driveTable)
         end,
         ["exe"] = function(filename, args)
             local requestedString = drive.readFile(filename)
-            assert(loadstring(requestedString)(args), "h")
+            loadstring(requestedString)(args)
         end,
         ["rsm"] = function(filename,args)
             print("\n Inio Rossembly is the new standard for low-level programming. This feature is currently not finished.\n\nSent file: " .. filename .. "\n")
